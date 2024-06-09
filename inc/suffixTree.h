@@ -18,11 +18,11 @@ class suffixTree {
 private:
     childNode* first_child;
 public:
-    void insert(std::string);
+    void insert(std::string, bool);
     std::pair<int, int> search_substring(std::string);
     void print_node_recursive(childNode*, std::string);
     void print_stored_substrings();
-    suffixTree(std::string);
+    suffixTree(std::string, bool);
 };
 
 #endif
