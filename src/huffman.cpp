@@ -2,7 +2,6 @@
 #include <iostream>
 #include <ostream>
 #include <queue>
-#include <stack>
 #include <unordered_map>
 
 bool Compare::operator()(Node* node_l, Node* node_r) {
@@ -13,13 +12,11 @@ Node::Node(char symbol, size_t freq, Node* left, Node* right, Node* parent)
     : symbol(symbol), freq(freq), left(left), right(right), parent(parent) {}
 
 Node::Node(Node* node_l, Node* node_r)
-    : symbol('\0'), freq(node_l->freq + node_r->freq), left(nullptr),
-      right(nullptr), parent(nullptr) {
+    : symbol('\0'), freq(node_l->freq + node_r->freq), left(node_l),
+      right(node_r), parent(nullptr) {
 
     node_l->parent = this;
     node_r->parent = this;
-    this->left = node_l;
-    this->right = node_r;
 }
 
 bool Node::is_leaf() { return !(left || right); }
@@ -50,6 +47,7 @@ std::tuple<std::string, Node*> encode(std::string& message) {
     return std::tuple(coded_message, root);
 }
 
+/* Para mensajes muy grandes puede que sea necesario no usar recursividad */
 void traverse_huffman_tree(Node* node, std::string code,
                            std::unordered_map<char, std::string>& code_map) {
 
@@ -77,6 +75,7 @@ std::unordered_map<char, size_t> calculate_frequencies(std::string& message) {
     return frequencies;
 }
 
+/* TODO: Manejar edge case de un carácter */
 Node* generate_huffman_tree(std::unordered_map<char, size_t>& frequencies) {
 
     std::priority_queue<Node*, std::vector<Node*>, Compare> prio_queue;
