@@ -65,7 +65,35 @@ void traverse_huffman_tree(Node* node, std::string code,
     }
 }
 
-std::string decode(std::string&, Node&);
+std::string decode(std::string& coded_message, Node& tree) {
+
+    /* El mensaje es la repeticion de un mismo caracter */
+    if (tree.is_leaf()) {
+        return std::string(coded_message.size(), tree.symbol);
+    }
+
+    std::string decoded_message("");
+
+    /* Decodificamos */
+    Node* v = &tree;
+    for (char c : coded_message) {
+        /* Si es 0, vamos al hijo izquierdo, de lo contrario (es 1), vamos a la derecha */
+        if (c == '0') {
+            v = v->left;
+        } else {
+            v = v->right;
+        }
+        /* 
+         * Si el nodo es una hoja, hemos encontrado el simbolo correspondiente, la agregamos al mensaje decodificado
+         * y volvemos a la raíz.
+         */
+        if (v->is_leaf()) {
+            decoded_message += v->symbol;
+            v = &tree;
+        }
+    }
+    return decoded_message;
+}
 
 std::unordered_map<char, size_t> calculate_frequencies(std::string& message) {
     std::unordered_map<char, size_t> frequencies;
