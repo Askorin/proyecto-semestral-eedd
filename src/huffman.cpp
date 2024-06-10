@@ -34,9 +34,9 @@ std::tuple<std::string, Node*> encode(std::string& message) {
     traverse_huffman_tree(root, "", code_map);
 
     /* Sanity check */
-    for (auto entry : code_map) {
-        std::cout << entry.first << ": " << entry.second << std::endl;
-    }
+    //for (auto entry : code_map) {
+    //    std::cout << entry.first << ": " << entry.second << std::endl;
+    //}
 
     std::string coded_message("");
     /* Codificamos */
@@ -79,9 +79,10 @@ std::unordered_map<char, size_t> calculate_frequencies(std::string& message) {
 Node* generate_huffman_tree(std::unordered_map<char, size_t>& frequencies) {
 
     std::priority_queue<Node*, std::vector<Node*>, Compare> prio_queue;
-    /* 
-     * El orden en el que el iterador itere sobre las entries del mapa influye en la naturaleza
-     * de la codificación, pero sigue siendo la misma en verdad, no asustarse.
+    /*
+     * El orden en el que el iterador itere sobre las entries del mapa influye
+     * en la naturaleza de la codificación, pero sigue siendo la misma en
+     * verdad, no asustarse.
      */
     for (auto entry : frequencies) {
         prio_queue.push(
