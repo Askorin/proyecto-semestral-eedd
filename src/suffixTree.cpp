@@ -1,15 +1,15 @@
 #include "../inc/suffixTree.h"
 #include <iostream>
 #include <string>
+#include <utility>
 
-childNode::childNode() {
-    this->pos = -1;
+childNode::childNode(int suffix_pos, std::string suffix_string) : pos(suffix_pos), string(suffix_string) {
+    this->child = NULL;
+    this->next_sibling = NULL;
 }
 
-childNode::childNode(int suffix_pos, std::string suffix_string) : pos(suffix_pos), string(suffix_string) {}
-
 void suffixTree::insert(std::string text, bool verbose = 0) {
-    for (int i = 0; i < text.length(); i++) {
+    for (int i = 0; i < (int) text.length(); i++) {
         if (verbose) std::cout << "----------------------------------------\nInsertando palabra " << text.substr(i) << "\n"; 
         if (this->first_child == NULL) {
             this->first_child = new childNode(0, text);
@@ -35,11 +35,11 @@ void suffixTree::insert(std::string text, bool verbose = 0) {
                 }
 
                 if (local_substring == actual_node->string) {
-                    if (verbose) std::cout << "Inicio de text es igual a todo el nodo, buscando semejanzas en hijo\n";
+                    if (verbose) std::cout << "Inicio de text es igual a todo el nodo, buscando semejanzas en hijo\nNodo actual: " << actual_node->child->string << "\n";
                     parent_node = actual_node;
                     actual_node = actual_node->child;
                     substring.append(local_substring);
-                    continue;
+                    local_substring = std::string();
                 }
             }
             
@@ -57,7 +57,7 @@ void suffixTree::insert(std::string text, bool verbose = 0) {
                 childNode* prev_child = actual_node->child;
                 actual_node->string = local_substring;
                 actual_node->child = new childNode(actual_node->pos, prev_string.substr(local_substring.length()));
-                actual_node->child->next_sibling = new childNode(i, text.substr(textpos));
+                actual_node->child->next_sibling = new childNode(i + this->length_text, text.substr(textpos));
                 actual_node->child->child = prev_child;
                 inserted = 1;
                 break;
@@ -67,21 +67,23 @@ void suffixTree::insert(std::string text, bool verbose = 0) {
 
             actual_node = actual_node->next_sibling;
         } while (actual_node != NULL);
-
+            
         if (inserted || already_present) continue;
 
         if (parent_node != NULL) {
             if (verbose) std::cout << "Creando hijo en nodo " << parent_node->string << " al no encontrar semejanzas en ningún sibling\n";
             childNode* prev_child = parent_node->child;
-            parent_node->child = new childNode(i, text.substr(i + substring.length()));
+            parent_node->child = new childNode(i + this->length_text, text.substr(i + substring.length()));
             parent_node->child->next_sibling = prev_child;
         } else {
             if (verbose) std::cout << "Creando nodo en root al no encontrar semejanzas en ningún sibling\n";
             childNode* prev_child = this->first_child;
-            this->first_child = new childNode(i, text.substr(i));
+            this->first_child = new childNode(i + this->length_text, text.substr(i));
             this->first_child->next_sibling = prev_child;
         }
     } 
+
+    this->length_text += text.length();
 }
 
 void suffixTree::print_node_recursive(childNode* node, std::string prev) {
@@ -99,13 +101,37 @@ void suffixTree::print_stored_substrings() {
     print_node_recursive(this->first_child, std::string());
 }
 
-suffixTree::suffixTree(std::string text, bool verbose = 0) {
-    this->first_child = NULL;
-    this->insert(text, verbose);
+std::pair<int, int> suffixTree::search_substring(std::string string_to_find) {
+    childNode* actual_node = this->first_child;
+    std::string substring;
+    bool already_present = 0;
+    do {
+        std::string local_substring;
+        while (actual_node->string[local_substring.length()] == string_to_find[substring.length() + local_substring.length()]) {
+            local_substring.push_back(actual_node->string[local_substring.length()]);
+
+            if ((substring.length() + local_substring.length()) >= string_to_find.length()) {
+                return std::make_pair(actual_node->pos, string_to_find.length());
+                already_present = 1;
+                break;
+            }
+
+            if (local_substring == actual_node->string) {
+                actual_node = actual_node->child;
+                substring.append(local_substring);
+                local_substring = std::string();
+            }
+        }
+
+        if (already_present) break;
+
+        actual_node = actual_node->next_sibling;
+    } while (actual_node != NULL);
+    return std::make_pair(0, 0);
 }
 
-int main() {
-    suffixTree tree(std::string("HOLA_ANTONIO")); 
-
-    tree.print_stored_substrings();
+suffixTree::suffixTree(std::string text, bool verbose = 0) {
+    this->length_text = 0;
+    this->first_child = NULL;
+    this->insert(text, verbose);
 }

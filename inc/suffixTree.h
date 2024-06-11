@@ -10,13 +10,13 @@ public:
     childNode* child;
     int pos;
     std::string string;
-    childNode();
     childNode(int, std::string);
 };
 
 class suffixTree {
 private:
     childNode* first_child;
+    int length_text;
 public:
     void insert(std::string, bool);
     std::pair<int, int> search_substring(std::string);
