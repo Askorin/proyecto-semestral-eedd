@@ -11,15 +11,23 @@
 #include <utility>
 #include <vector>
 
+#define CHAR_NUM 256
+#define MAX_CODE_SIZE 255
+
+/*
+ * Tamaño máximo permitido para codificar: 2^32 - 1 (se ocupan 4 bytes para
+ * guardar longitud del mensaje
+ */
+
 class Node {
   public:
-    char symbol;
+    unsigned char symbol;
     size_t freq;
     Node* left;
     Node* right;
     Node* parent;
     /* Constructor normal de nodos */
-    Node(char, size_t, Node*, Node*, Node*);
+    Node(unsigned char, size_t, Node*, Node*, Node*);
     /* Constructor de combinación de nodos */
     Node(Node*, Node*);
 
@@ -27,10 +35,9 @@ class Node {
 };
 
 struct Code {
-    // boost::dynamic_bitset<> code;
-    std::bitset<255> code;
+    std::bitset<MAX_CODE_SIZE> code;
     unsigned char length;
-    Code(std::bitset<255>, unsigned char);
+    Code(std::bitset<MAX_CODE_SIZE>, unsigned char);
     Code();
     Code get_reversed();
 };
@@ -53,46 +60,44 @@ class CompareHuffmanNodes {
  */
 class CompareCodes {
   public:
-    bool operator()(std::pair<char, unsigned char>,
-                    std::pair<char, unsigned char>);
+    bool operator()(std::pair<unsigned char, unsigned char>,
+                    std::pair<unsigned char, unsigned char>);
 };
-
-std::tuple<std::string, Node*> encode(std::string&);
 
 void encode_file(std::string&, std::string&);
 
-void save_header(std::ofstream&, std::unordered_map<char, Code>&,
-                 std::unordered_map<unsigned char, size_t>&, std::vector<char>&,
+void save_header(std::ofstream&, std::array<Code, CHAR_NUM>&,
+                 std::array<size_t, CHAR_NUM>&, std::vector<unsigned char>&,
                  size_t);
 
-void save_code(std::ofstream&, std::ifstream& fin, std::unordered_map<char, Code>&,
-               std::unordered_map<unsigned char, size_t>&, std::vector<char>&,
+void save_code(std::ofstream&, std::ifstream& fin,
+               std::array<Code, CHAR_NUM>&,
+               std::array<size_t, CHAR_NUM>&, std::vector<unsigned char>&,
                size_t);
 
-std::unordered_map<char, Code>
-get_canonical_codes(std::unordered_map<char, unsigned char>&,
-                    std::vector<char>&);
+std::array<Code, CHAR_NUM>
+get_canonical_codes(std::array<unsigned char, CHAR_NUM>&,
+                    std::vector<unsigned char>&);
 
 std::string decode(std::string&, Node&);
 
 void decode_file(std::string&, std::string&);
 
-std::unordered_map<char, size_t> calculate_frequencies(std::string&);
+std::unordered_map<unsigned char, size_t> calculate_frequencies(std::string&);
 
-std::unordered_map<char, size_t> calculate_frequencies_from_file(std::string&,
+std::unordered_map<unsigned char, size_t> calculate_frequencies_from_file(std::string&,
                                                                  size_t&);
 
-Node* generate_huffman_tree(std::unordered_map<char, size_t>&);
+Node* generate_huffman_tree(std::unordered_map<unsigned char, size_t>&);
 
-Node* generate_huffman_tree(std::unordered_map<char, Code>&);
+Node* generate_huffman_tree(std::array<Code, CHAR_NUM>&);
 
-void traverse_huffman_tree(Node*, std::unordered_map<char, unsigned char>&,
-                           unsigned char, size_t&,
-                           std::unordered_map<unsigned char, size_t>&, size_t&);
+void traverse_huffman_tree(Node*, std::array<unsigned char, CHAR_NUM>&, size_t&,
+                           std::array<size_t, CHAR_NUM>&, size_t&);
 
-void _generate_huffman_tree(char, Code&, Node*, size_t, size_t&);
+void _generate_huffman_tree(unsigned char, Code&, Node*, size_t, size_t&);
 
 /* Boost no tiene una operación de adición, así que aquí está. */
-void increment(std::bitset<255>&);
+void increment(std::bitset<MAX_CODE_SIZE>&);
 
 #endif
