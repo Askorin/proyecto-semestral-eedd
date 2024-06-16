@@ -1,8 +1,14 @@
 #ifndef HUFFMAN_H
 #define HUFFMAN_H
+#include "../inc/BitField.h"
+#include <bitset>
+#include <boost/dynamic_bitset.hpp>
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>
+#include <map>
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 class Node {
@@ -20,22 +26,67 @@ class Node {
     bool is_leaf();
 };
 
+struct Code {
+    boost::dynamic_bitset<> code;
+    unsigned char length;
+    Code(boost::dynamic_bitset<>, unsigned char);
+    Code();
+    Code get_reversed();
+};
+
 std::ostream& operator<<(std::ostream&, const Node&);
 
-class Compare {
+/*
+ * Para comparar nodos de huffman a la hora de insertaros a la prio_queue en la
+ * generación del arbol
+ */
+class CompareHuffmanNodes {
   public:
     bool operator()(Node*, Node*);
 };
 
+/*
+ * Para comparar a la hora de generar los códigos canónicos de Huffman,
+ * compara un símbolo y la longitud del codigo asignado por Huffman
+ * convencional.
+ */
+class CompareCodes {
+  public:
+    bool operator()(std::pair<char, unsigned char>,
+                    std::pair<char, unsigned char>);
+};
+
 std::tuple<std::string, Node*> encode(std::string&);
+
+void encode_file(std::string&, std::string&);
+
+void save_header(std::ofstream&, std::map<char, Code>&,
+                 std::unordered_map<unsigned char, size_t>&, std::vector<char>&,
+                 size_t);
+
+void save_code(std::ofstream&, std::ifstream& fin, std::map<char, Code>&,
+               std::unordered_map<unsigned char, size_t>&, std::vector<char>&,
+               size_t);
+
+std::map<char, Code>
+get_canonical_codes(std::unordered_map<char, unsigned char>&,
+                    std::vector<char>&);
 
 std::string decode(std::string&, Node&);
 
+void decode_file(std::string&, std::string&);
+
 std::unordered_map<char, size_t> calculate_frequencies(std::string&);
+
+std::unordered_map<char, size_t> calculate_frequencies_from_file(std::string&, size_t&);
 
 Node* generate_huffman_tree(std::unordered_map<char, size_t>&);
 
-void traverse_huffman_tree(Node*, std::string,
-                           std::unordered_map<char, std::string>&);
+void traverse_huffman_tree(Node*, std::unordered_map<char, unsigned char>&,
+                           unsigned char, size_t&,
+                           std::unordered_map<unsigned char, size_t>&);
+
+/* Boost no tiene una operación de adición, así que aquí está. */
+void increment(boost::dynamic_bitset<>&);
 
 #endif
