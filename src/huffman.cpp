@@ -40,14 +40,14 @@ std::ostream& operator<<(std::ostream& os, const Node& node) {
     return (os << node.symbol << " : " << node.freq);
 }
 
-Code::Code(boost::dynamic_bitset<> code, unsigned char length)
+Code::Code(std::bitset<255> code, unsigned char length)
     : code(code), length(length) {}
 
-Code::Code() : code(boost::dynamic_bitset<>()), length(0) {}
+Code::Code() : code(std::bitset<255>()), length(0) {}
 
 Code Code::get_reversed() {
-    boost::dynamic_bitset<> reversed(255, 0);
-    boost::dynamic_bitset<> to_reverse = code;
+    std::bitset<255> reversed;
+    std::bitset<255> to_reverse = code;
     for (size_t i = 0; i < length; ++i) {
         reversed[length - 1 - i] = to_reverse[0];
         to_reverse >>= 1;
@@ -59,7 +59,8 @@ Code Code::get_reversed() {
 void encode_file(std::string& file_name_input, std::string& file_name_output) {
     std::cout << "### Comenzando Codificación ###\n";
     size_t message_len = 0;
-    auto frequencies = calculate_frequencies_from_file(file_name_input, message_len);
+    auto frequencies =
+        calculate_frequencies_from_file(file_name_input, message_len);
     std::cout << "Message length: " << message_len << '\n';
     Node* root = generate_huffman_tree(frequencies);
 
@@ -75,8 +76,11 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
      */
     std::unordered_map<unsigned char, size_t> length_map;
 
+    /* Longitud total del mensaje codificado */
     size_t total_len = 0;
-    traverse_huffman_tree(root, code_map, 0, total_len, length_map);
+    /* Máxima longitud de los códigos */
+    size_t max_length = 0;
+    traverse_huffman_tree(root, code_map, 0, total_len, length_map, max_length);
 
     /* Este vector servirá para guardar los símbolos en orden el de las
      * longitudes de sus códigos */
@@ -85,28 +89,28 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
     /*
      * Generamos los códigos canónicos
      */
-    std::map<char, Code> canonical_codes =
+    std::unordered_map<char, Code> canonical_codes =
         get_canonical_codes(code_map, ordered_symbols);
 
-    std::cout << "Códigos Canónicos:\n";
-    for (auto entry : canonical_codes) {
-        char c = entry.first;
-        boost::dynamic_bitset<> code = entry.second.code;
-        code.resize(entry.second.length);
-        std::cout << c << ", " << int(c) << ": " << code << std::endl;
-    }
+    // std::cout << "Códigos Canónicos:\n";
+    // for (auto entry : canonical_codes) {
+    //     char c = entry.first;
+    //     boost::dynamic_bitset<> code = entry.second.code;
+    //     code.resize(entry.second.length);
+    //     std::cout << c << ", " << int(c) << ": " << code << std::endl;
+    // }
 
     boost::dynamic_bitset<> coded_message(total_len);
 
-    /* Contador de acumulación que lleva el tamaño del mensaje codificado */
-    size_t running_len = 0;
-
     /* Codificamos */
     std::ifstream fin(file_name_input, std::fstream::in);
-    //char c;
-    //std::cout << "yahoo\n";
-    //while (fin >> std::noskipws >> c) {
-    //    auto value = canonical_codes[c];
+
+    ///* Contador de acumulación que lleva el tamaño del mensaje codificado */
+    // size_t running_len = 0;
+    // char c;
+    // std::cout << "yahoo\n";
+    // while (fin >> std::noskipws >> c) {
+    //     auto value = canonical_codes[c];
 
     //    /*
     //     * El código asociado, le hacemos un resize para poder hacer el bit
@@ -125,7 +129,7 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
 
     //    running_len += code_len;
     //}
-    //std::cout << "yahoo2\n";
+    // std::cout << "yahoo2\n";
 
     // std::cout << coded_message << '\n'
     //           << "Total Len: " << total_len << " Running Len: " <<
@@ -135,6 +139,26 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
     std::ofstream fout(file_name_output, std::ofstream::out |
                                              std::ofstream::trunc |
                                              std::ofstream::binary);
+
+    /*
+     * Para el primer tipo de header se guardan las longitudes de los códigos
+     * para TODOS los símbolos del alfabeto.
+     * */
+    size_t tamaño_header_tipo_1 = 255;
+    /*
+     * Para el segundo tipo se guardan las frecuencias de cada longitud de
+     * código y luego los símbolos ordenados con respecto a longitud de código.
+     * Se deben guardar las frecuencias de longitudes para cada longitud menor o
+     * igual que la máxima, eso incurre 1 * max_length bytes. Luego,
+     * evidentemente, para guardar los símbolos es el tamaño del vector de
+     * ellos. Además se incluye un separador de un byte netre las dos.
+     */
+    size_t tamaño_header_tipo_2 = max_length + ordered_symbols.size() + 1;
+
+    if (tamaño_header_tipo_1 <= tamaño_header_tipo_2) {
+        std::cout << "Usando header tipo 1\n";
+    } else
+        std::cout << "Usando header tipo 2\n";
 
     save_header(fout, canonical_codes, length_map, ordered_symbols,
                 message_len);
@@ -146,7 +170,7 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
     return;
 }
 
-std::map<char, Code>
+std::unordered_map<char, Code>
 get_canonical_codes(std::unordered_map<char, unsigned char>& code_map,
                     std::vector<char>& ordered_symbols) {
 
@@ -160,14 +184,14 @@ get_canonical_codes(std::unordered_map<char, unsigned char>& code_map,
         prio_queue.push(entry);
     }
 
-    std::map<char, Code> canonical_codes;
+    std::unordered_map<char, Code> canonical_codes;
 
     /*
      * Observación: En el peor caso, para los 256 carácteres ASCII, podríamos
      * terminar con un código de 255 bits, asi que guardaremos los códigos en un
      * bitset de ese tamaño.
      */
-    boost::dynamic_bitset<> code(255);
+    std::bitset<255> code;
     /*
      * Al primer símbolo se le asigna un código de la misma longitud, compuesto
      * únicamente por ceros.
@@ -186,15 +210,12 @@ get_canonical_codes(std::unordered_map<char, unsigned char>& code_map,
         increment(code);
 
         code = code << (next_bit_length - current_bit_length);
-
-        auto code_for_show(code);
-        code_for_show.resize(3);
-        // std::cout << code_for_show << ", " << int(next_bit_length) << '\n';
     }
     return canonical_codes;
 }
 
-void save_header(std::ofstream& fout, std::map<char, Code>& canonical_codes,
+void save_header(std::ofstream& fout,
+                 std::unordered_map<char, Code>& canonical_codes,
                  std::unordered_map<unsigned char, size_t>& length_map,
                  std::vector<char>& ordered_symbols, size_t message_len) {
 
@@ -239,7 +260,7 @@ void save_header(std::ofstream& fout, std::map<char, Code>& canonical_codes,
 }
 
 void save_code(std::ofstream& fout, std::ifstream& fin,
-               std::map<char, Code>& canonical_codes,
+               std::unordered_map<char, Code>& canonical_codes,
                std::unordered_map<unsigned char, size_t>& length_map,
                std::vector<char>& ordered_symbols, size_t message_len) {
 
@@ -274,15 +295,15 @@ void save_code(std::ofstream& fout, std::ifstream& fin,
     }
 
     ///* Ahora guardamos el código */
-    //size_t bits_remaining = coded_message.size();
+    // size_t bits_remaining = coded_message.size();
 
-    //boost::dynamic_bitset<> byte_mask(coded_message.size(), 0xFF);
+    // boost::dynamic_bitset<> byte_mask(coded_message.size(), 0xFF);
 
-    //while (bits_remaining > 0) {
-    //    unsigned char write_byte = (coded_message & byte_mask).to_ulong();
-    //    fout.write(reinterpret_cast<char*>(&write_byte), sizeof(write_byte));
-    //    // fout.write(reinterpret_cast<char*>(&to_write), sizeof(to_write));
-    //    coded_message >>= 8;
+    // while (bits_remaining > 0) {
+    //     unsigned char write_byte = (coded_message & byte_mask).to_ulong();
+    //     fout.write(reinterpret_cast<char*>(&write_byte), sizeof(write_byte));
+    //     // fout.write(reinterpret_cast<char*>(&to_write), sizeof(to_write));
+    //     coded_message >>= 8;
 
     //    if (8 >= bits_remaining) {
     //        break;
@@ -321,8 +342,10 @@ void decode_file(std::string& file_name_input, std::string& file_name_output) {
 
     /* Ahora tenemos que reconstruir los códigos canónicos. */
     std::vector<char> ordered_symbols;
-    std::map<char, Code> code_map =
+    std::unordered_map<char, Code> code_map =
         get_canonical_codes(code_lengths, ordered_symbols);
+
+    Node* root = generate_huffman_tree(code_map);
 
     // for (auto entry : code_map) {
     //     char c = entry.first;
@@ -330,7 +353,6 @@ void decode_file(std::string& file_name_input, std::string& file_name_output) {
     //     code.resize(entry.second.length);
     //     std::cout << c << ", " << int(c) << ": " << code << std::endl;
     // }
-
 
     /* Ahora podemos decodificar el mensaje. Primero hay que tener en cuenta
      * un par de cosas:
@@ -357,121 +379,142 @@ void decode_file(std::string& file_name_input, std::string& file_name_output) {
      * final, lo que no debería pasar).
      */
 
-    std::cout << "### Decodificando y escrbiendo resultados ###\n";
+    std::cout << "### Decodificando y guardando resultados ###\n";
     std::ofstream fout(file_name_output,
                        std::ofstream::out | std::ofstream::trunc);
 
     size_t decoded_symbols = 0;
-    size_t symbol_idx = 0;
-    boost::dynamic_bitset<> current_code(255);
 
     unsigned char buffer = 0;
     unsigned char buffer_size = 0;
 
-    unsigned char current_code_length = 0;
+    Node* current = root;
     while (decoded_symbols < message_len) {
-        char nearest_char = ordered_symbols[symbol_idx];
-        unsigned char nearest_code_length = code_map[nearest_char].length;
-        while (current_code_length < nearest_code_length) {
-
-            if (!buffer_size) {
-                fin.read(reinterpret_cast<char*>(&buffer), 1);
-                buffer_size += 8;
-            }
-
-            /*
-             * Extraemos el menos significativo del mensaje codificado y lo
-             * añadimos al final del código que estamos acumulando
-             */
-
-            current_code[current_code_length++] = buffer & 1;
-            buffer >>= 1;
-            buffer_size -= 1;
+        if (!buffer_size) {
+            fin.read(reinterpret_cast<char*>(&buffer), 1);
+            buffer_size += 8;
         }
+        int bit = buffer & 1;
+        buffer >>= 1;
+        --buffer_size;
 
-        /* Chequeamos si es que el código calza */
-        if (current_code == code_map[nearest_char].code) {
+        // TODO: Manejar caso root es hoja
+        if (bit)
+            current = current->right;
+        else
+            current = current->left;
+
+        if (current->is_leaf()) {
             ++decoded_symbols;
-            current_code = boost::dynamic_bitset<>(255);
-            current_code_length = 0;
-            symbol_idx = 0;
-            fout << nearest_char;
-        } else {
-            ++symbol_idx;
-            if (symbol_idx == ordered_symbols.size()) {
-                std::cout << "No se logró para: " << current_code << '\n';
-            }
+            fout << current->symbol;
+            current = root;
         }
     }
+
+    //unsigned char current_code_length = 0;
+    //while (decoded_symbols < message_len) {
+    //    char nearest_char = ordered_symbols[symbol_idx];
+    //    unsigned char nearest_code_length = code_map[nearest_char].length;
+    //    while (current_code_length < nearest_code_length) {
+
+    //        if (!buffer_size) {
+    //            fin.read(reinterpret_cast<char*>(&buffer), 1);
+    //            buffer_size += 8;
+    //        }
+
+    //        /*
+    //         * Extraemos el menos significativo del mensaje codificado y lo
+    //         * añadimos al final del código que estamos acumulando
+    //         */
+
+    //        current_code[current_code_length++] = buffer & 1;
+    //        buffer >>= 1;
+    //        buffer_size -= 1;
+    //    }
+
+    //    /* Chequeamos si es que el código calza */
+    //    if (current_code == code_map[nearest_char].code) {
+    //        ++decoded_symbols;
+    //        current_code = std::bitset<255>();
+    //        current_code_length = 0;
+    //        symbol_idx = 0;
+    //        fout << nearest_char;
+    //    } else {
+    //        ++symbol_idx;
+    //        if (symbol_idx == ordered_symbols.size()) {
+    //            std::cout << "No se logró para: " << current_code << '\n';
+    //        }
+    //    }
+    //}
 
     fout.close();
 }
 
-std::tuple<std::string, Node*> encode(std::string& message) {
-    auto frequencies = calculate_frequencies(message);
-    Node* root = generate_huffman_tree(frequencies);
-
-    /* Ahora que tenemos el arbol, lo recorremos */
-
-    std::unordered_map<char, unsigned char> code_map;
-    /*
-     * Mapa que guardará la recuencia de una longitud de código dada, además
-     * del primer símbolo que posee esa longitud de código, utilizado para
-     * Huffman canónico
-     */
-    std::unordered_map<unsigned char, size_t> length_map;
-
-    /*
-     * Observación: En el peor caso, para los 256 carácteres ASCII,
-     * podríamos terminar con un código de 255 bits, asi que guardaremos los
-     * códigos en un bitset de ese tamaño.
-     */
-
-    size_t total_len = 0;
-    traverse_huffman_tree(root, code_map, 0, total_len, length_map);
-
-    /* Este vector servirá para guardar los símbolos en orden el de las
-     * longitudes de sus códigos */
-    std::vector<char> ordered_symbols;
-
-    std::map<char, Code> canonical_codes =
-        get_canonical_codes(code_map, ordered_symbols);
-    std::cout << "Códigos Canónicos:\n";
-    for (auto entry : canonical_codes) {
-        char c = entry.first;
-        boost::dynamic_bitset<> code = entry.second.code;
-        code.resize(entry.second.length);
-        std::cout << c << ", " << int(c) << ": " << code << std::endl;
-    }
-
-    boost::dynamic_bitset<> coded_message(total_len);
-
-    size_t running_len = 0;
-    /* Codificamos */
-    for (char c : message) {
-        auto value = canonical_codes[c];
-        /*
-         * El código asociado, le hacemos un resize para poder hacer el bit
-         * shift y el 'or' posterior
-         */
-        boost::dynamic_bitset<> code = value.code;
-        code.resize(total_len);
-        unsigned char code_len = value.length;
-
-        /* Alineamos el código del caracter al lugar indicado */
-        code <<= running_len;
-        // std::cout << c << ": " << code << '\n';
-        coded_message |= code;
-
-        running_len += code_len;
-    }
-    // std::cout << coded_message << '\n'
-    //           << "Total Len: " << total_len << " Running Len: " <<
-    //           running_len
-    //           << '\n';
-
-    return std::tuple("", root);
-}
+// std::tuple<std::string, Node*> encode(std::string& message) {
+//     auto frequencies = calculate_frequencies(message);
+//     Node* root = generate_huffman_tree(frequencies);
+//
+//     /* Ahora que tenemos el arbol, lo recorremos */
+//
+//     std::unordered_map<char, unsigned char> code_map;
+//     /*
+//      * Mapa que guardará la recuencia de una longitud de código dada, además
+//      * del primer símbolo que posee esa longitud de código, utilizado para
+//      * Huffman canónico
+//      */
+//     std::unordered_map<unsigned char, size_t> length_map;
+//
+//     /*
+//      * Observación: En el peor caso, para los 256 carácteres ASCII,
+//      * podríamos terminar con un código de 255 bits, asi que guardaremos los
+//      * códigos en un bitset de ese tamaño.
+//      */
+//
+//     size_t total_len = 0;
+//     traverse_huffman_tree(root, code_map, 0, total_len, length_map);
+//
+//     /* Este vector servirá para guardar los símbolos en orden el de las
+//      * longitudes de sus códigos */
+//     std::vector<char> ordered_symbols;
+//
+//     std::map<char, Code> canonical_codes =
+//         get_canonical_codes(code_map, ordered_symbols);
+//     std::cout << "Códigos Canónicos:\n";
+//     for (auto entry : canonical_codes) {
+//         char c = entry.first;
+//         boost::dynamic_bitset<> code = entry.second.code;
+//         code.resize(entry.second.length);
+//         std::cout << c << ", " << int(c) << ": " << code << std::endl;
+//     }
+//
+//     boost::dynamic_bitset<> coded_message(total_len);
+//
+//     size_t running_len = 0;
+//     /* Codificamos */
+//     for (char c : message) {
+//         auto value = canonical_codes[c];
+//         /*
+//          * El código asociado, le hacemos un resize para poder hacer el bit
+//          * shift y el 'or' posterior
+//          */
+//         boost::dynamic_bitset<> code = value.code;
+//         code.resize(total_len);
+//         unsigned char code_len = value.length;
+//
+//         /* Alineamos el código del caracter al lugar indicado */
+//         code <<= running_len;
+//         // std::cout << c << ": " << code << '\n';
+//         coded_message |= code;
+//
+//         running_len += code_len;
+//     }
+//     // std::cout << coded_message << '\n'
+//     //           << "Total Len: " << total_len << " Running Len: " <<
+//     //           running_len
+//     //           << '\n';
+//
+//     return std::tuple("", root);
+// }
 
 /*
  * Observación : Para mensajes muy grandes puede que sea necesario no usar
@@ -522,68 +565,19 @@ std::tuple<std::string, Node*> encode(std::string& message) {
 
 void traverse_huffman_tree(
     Node* root, std::unordered_map<char, unsigned char>& code_map,
-    size_t& total_bits, std::unordered_map<unsigned char, size_t>& length_map) {
-
-    unsigned char bit = 0;
-    Node* current = root;
-    Node* pre = nullptr;
-
-    while (current != nullptr) {
-        if (current->left == nullptr) {
-            /* Process current node */
-            if (current->is_leaf()) {
-                total_bits += current->freq * bit;
-                code_map[current->symbol] = bit;
-                ++length_map[bit];
-            }
-
-            /* Move to the right subtree */
-            current = current->right;
-        } else {
-            // Find the inorder predecessor of current
-            pre = current->left;
-            unsigned char temp_bit = bit + 1;
-
-            while (pre->right != nullptr && pre->right != current) {
-                pre = pre->right;
-            }
-
-            // Make current as the right child of its inorder predecessor
-            if (pre->right == nullptr) {
-                pre->right = current;
-
-                // Process current node
-                if (current->is_leaf()) {
-                    total_bits += current->freq * bit;
-                    code_map[current->symbol] = bit;
-                    ++length_map[bit];
-                }
-
-                current = current->left;
-                ++bit;
-            } else {
-                pre->right = nullptr;
-                current = current->right;
-                --bit;
-            }
-        }
-    }
-}
-
-void traverse_huffman_tree(
-    Node* root, std::unordered_map<char, unsigned char>& code_map,
     unsigned char bit, size_t& total_bits,
-    std::unordered_map<unsigned char, size_t>& length_map) {
+    std::unordered_map<unsigned char, size_t>& length_map, size_t& max_length) {
 
     if (!root)
         return;
 
-    std::stack<std::pair<Node*, unsigned char>> stack;
-    stack.push(std::pair(root, 0));
+    std::stack<std::pair<Node*, unsigned char>>* stack =
+        new std::stack<std::pair<Node*, unsigned char>>();
+    stack->push(std::pair(root, 0));
 
-    while (!stack.empty()) {
-        auto current = stack.top();
-        stack.pop();
+    while (!stack->empty()) {
+        auto current = stack->top();
+        stack->pop();
 
         Node* node = current.first;
         unsigned char bit = current.second;
@@ -594,12 +588,13 @@ void traverse_huffman_tree(
             ++length_map[bit];
         }
         if (node->right) {
-            stack.push(std::pair(node->right, bit + 1));
+            stack->push(std::pair(node->right, bit + 1));
         }
         if (node->left) {
-            stack.push({node->left, bit + 1});
+            stack->push({node->left, bit + 1});
         }
     }
+    delete stack;
 }
 
 std::string decode(std::string& coded_message, Node& tree) {
@@ -687,11 +682,49 @@ Node* generate_huffman_tree(std::unordered_map<char, size_t>& frequencies) {
     return root;
 }
 
-void increment(boost::dynamic_bitset<>& bitset) {
+Node* generate_huffman_tree(std::unordered_map<char, Code>& code_map) {
+
+    Node* root = new Node(0, 0, nullptr, nullptr, nullptr);
+    for (auto entry : code_map) {
+        auto symbol = entry.first;
+        auto code = entry.second;
+        size_t total_bits = 0;
+        _generate_huffman_tree(symbol, code, root, code.code[0], total_bits);
+    }
+    return root;
+}
+
+void _generate_huffman_tree(char symbol, Code& code, Node* node, size_t bit,
+                            size_t& total_bits) {
+
+    Node* child;
+    if (bit) {
+        if (!node->right) {
+            node->right = new Node(symbol, 0, nullptr, nullptr, nullptr);
+        }
+        child = node->right;
+    } else {
+        if (!node->left) {
+            node->left = new Node(symbol, 0, nullptr, nullptr, nullptr);
+        }
+        child = node->left;
+    }
+
+    total_bits += 1;
+    if (code.length != total_bits) {
+        _generate_huffman_tree(symbol, code, child, code.code[total_bits],
+                               total_bits);
+    }
+}
+
+void increment(std::bitset<255>& bitset) {
     for (size_t i = 0; i < bitset.size(); ++i) {
         // std::cout << bitset[n_bits - 1 - i] << '\n';
-        if ((bitset[i] ^= 1))
+        bitset[i] = bitset[i] ^ 1;
+        if ((bitset[i]) == 1)
             return;
     }
-    bitset.push_back(1);
+    /* Si es que llegamos a este punto, en verdad no tengo nada que ofrecer, ya
+     * que es un bitset estático. En cualquier caso, no debería pasar. */
+    // bitset.push_back(1);
 }

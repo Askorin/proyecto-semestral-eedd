@@ -27,9 +27,10 @@ class Node {
 };
 
 struct Code {
-    boost::dynamic_bitset<> code;
+    // boost::dynamic_bitset<> code;
+    std::bitset<255> code;
     unsigned char length;
-    Code(boost::dynamic_bitset<>, unsigned char);
+    Code(std::bitset<255>, unsigned char);
     Code();
     Code get_reversed();
 };
@@ -60,15 +61,15 @@ std::tuple<std::string, Node*> encode(std::string&);
 
 void encode_file(std::string&, std::string&);
 
-void save_header(std::ofstream&, std::map<char, Code>&,
+void save_header(std::ofstream&, std::unordered_map<char, Code>&,
                  std::unordered_map<unsigned char, size_t>&, std::vector<char>&,
                  size_t);
 
-void save_code(std::ofstream&, std::ifstream& fin, std::map<char, Code>&,
+void save_code(std::ofstream&, std::ifstream& fin, std::unordered_map<char, Code>&,
                std::unordered_map<unsigned char, size_t>&, std::vector<char>&,
                size_t);
 
-std::map<char, Code>
+std::unordered_map<char, Code>
 get_canonical_codes(std::unordered_map<char, unsigned char>&,
                     std::vector<char>&);
 
@@ -78,15 +79,20 @@ void decode_file(std::string&, std::string&);
 
 std::unordered_map<char, size_t> calculate_frequencies(std::string&);
 
-std::unordered_map<char, size_t> calculate_frequencies_from_file(std::string&, size_t&);
+std::unordered_map<char, size_t> calculate_frequencies_from_file(std::string&,
+                                                                 size_t&);
 
 Node* generate_huffman_tree(std::unordered_map<char, size_t>&);
 
+Node* generate_huffman_tree(std::unordered_map<char, Code>&);
+
 void traverse_huffman_tree(Node*, std::unordered_map<char, unsigned char>&,
                            unsigned char, size_t&,
-                           std::unordered_map<unsigned char, size_t>&);
+                           std::unordered_map<unsigned char, size_t>&, size_t&);
+
+void _generate_huffman_tree(char, Code&, Node*, size_t, size_t&);
 
 /* Boost no tiene una operación de adición, así que aquí está. */
-void increment(boost::dynamic_bitset<>&);
+void increment(std::bitset<255>&);
 
 #endif
