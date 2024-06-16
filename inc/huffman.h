@@ -27,7 +27,6 @@ class Node {
 };
 
 struct Code {
-    // boost::dynamic_bitset<> code;
     std::bitset<255> code;
     unsigned char length;
     Code(std::bitset<255>, unsigned char);
@@ -57,15 +56,14 @@ class CompareCodes {
                     std::pair<char, unsigned char>);
 };
 
-std::tuple<std::string, Node*> encode(std::string&);
-
 void encode_file(std::string&, std::string&);
 
 void save_header(std::ofstream&, std::unordered_map<char, Code>&,
                  std::unordered_map<unsigned char, size_t>&, std::vector<char>&,
                  size_t);
 
-void save_code(std::ofstream&, std::ifstream& fin, std::unordered_map<char, Code>&,
+void save_code(std::ofstream&, std::ifstream& fin,
+               std::unordered_map<char, Code>&,
                std::unordered_map<unsigned char, size_t>&, std::vector<char>&,
                size_t);
 
@@ -87,8 +85,8 @@ Node* generate_huffman_tree(std::unordered_map<char, size_t>&);
 Node* generate_huffman_tree(std::unordered_map<char, Code>&);
 
 void traverse_huffman_tree(Node*, std::unordered_map<char, unsigned char>&,
-                           unsigned char, size_t&,
-                           std::unordered_map<unsigned char, size_t>&, size_t&);
+                           size_t&, std::unordered_map<unsigned char, size_t>&,
+                           size_t&);
 
 void _generate_huffman_tree(char, Code&, Node*, size_t, size_t&);
 
