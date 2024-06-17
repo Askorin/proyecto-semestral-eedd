@@ -1,12 +1,11 @@
 #include "../inc/huffman.h"
-#include <boost/dynamic_bitset.hpp>
-#include <boost/dynamic_bitset/dynamic_bitset.hpp>
 #include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <ostream>
 #include <queue>
 #include <stack>
+#include <array>
 
 bool CompareHuffmanNodes::operator()(Node* node_l, Node* node_r) {
     return node_l->freq > node_r->freq;

@@ -2,8 +2,6 @@
 #define HUFFMAN_H
 #include "../inc/BitField.h"
 #include <bitset>
-#include <boost/dynamic_bitset.hpp>
-#include <boost/dynamic_bitset/dynamic_bitset.hpp>
 #include <map>
 #include <string>
 #include <tuple>
@@ -97,7 +95,6 @@ void traverse_huffman_tree(Node*, std::array<unsigned char, CHAR_NUM>&, size_t&,
 
 void _generate_huffman_tree(unsigned char, Code&, Node*, size_t, size_t&);
 
-/* Boost no tiene una operación de adición, así que aquí está. */
 void increment(std::bitset<MAX_CODE_SIZE>&);
 
 #endif
