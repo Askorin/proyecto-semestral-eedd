@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 //Función que permite "cortar" un archivo a un tamaño máximo de bytes
 void truncate(std::string& filename, std::string& truncatedFilename, std::streamsize maxSize) {
@@ -34,22 +35,31 @@ void truncate(std::string& filename, std::string& truncatedFilename, std::stream
     std::cout << "Se ha creado una copia truncada del archivo " << filename << " a " << maxSize << " bytes" << std::endl;
 }
 
-int main() {
-    /*
-     * Nombre del archivo de texto seleccionado para al experimentación, en este caso, 'sources'
-     * el cual fue extraido del archivo comprimido sources.100MB.gz, pero pordria ser cualquier otro texto de Pizza&Chili.
-     */
-    std::string filename = "../data/sources";
+int main(int argc, char* argv[]) {
+
+    if (argc < 2) {
+        std::cerr << "Uso: " << argv[0] << " <nombre_archivo>" << std::endl;
+        return 1;
+    }
+
+    std::string filename = argv[1];
+    filename = "../data/"  + filename;
+
+    if (!std::filesystem::exists(filename)) {
+        std::cerr << "No se encontró el archivo: " << filename << std::endl;
+        return 1;
+    }
+    
     std::vector<int> sizes = {
-        1024, // 1kB
-        10240, // 10kB
-        102400, // 100kB
-        512000, // 500kB
-        1048576, // 1MB
-        5242880, // 5MB
-        10485760, // 10MB
-        52428800, // 50MB
-        104857600 // 100MB
+        1024,       // 1kB
+        10240,      // 10kB
+        102400,     // 100kB
+        512000,     // 500kB
+        1048576,    // 1MB
+        5242880,    // 5MB
+        10485760,   // 10MB
+        52428800,   // 50MB
+        104857600   // 100MB
     };
 
     for (auto size : sizes) {
