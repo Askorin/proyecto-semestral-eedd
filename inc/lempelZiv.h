@@ -3,14 +3,7 @@
 
 #include <string>
 
-struct encodedPair {
-    int pos;
-    int length;
-    encodedPair* next;
-    encodedPair(int, int, encodedPair*);
-};
-
-encodedPair* comprimir(std::string);
-std::string descomprimir(encodedPair*);
+void comprimir(std::string, int, std::string);
+std::string descomprimir(std::string);
 
 #endif

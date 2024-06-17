@@ -11,4 +11,3 @@ suffixTree.o: src/suffixTree.cpp inc/suffixTree.h
 .PHONY: clean
 clean:
 	rm -rf *.o
-
