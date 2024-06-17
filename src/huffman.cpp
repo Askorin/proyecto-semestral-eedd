@@ -58,11 +58,12 @@ Code Code::get_reversed() {
 }
 
 void encode_file(std::string& file_name_input, std::string& file_name_output) {
-    std::cout << "### Comenzando Codificación ###\n";
+    //std::cout << "### Comenzando Codificación ###\n";
     size_t message_len = 0;
     auto frequencies =
         calculate_frequencies_from_file(file_name_input, message_len);
-    std::cout << "Message length: " << message_len << '\n';
+    //std::cout << "Message length: " << message_len << '\n';
+    std::cout << message_len << ";";
     Node* root = generate_huffman_tree(frequencies);
 
     /* Mapa que guardará las longitudes de los códigos de cada símbolo, esto es
@@ -118,9 +119,9 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
     size_t tamaño_header_tipo_2 = max_length + ordered_symbols.size() + 1;
 
     if (tamaño_header_tipo_1 <= tamaño_header_tipo_2) {
-        std::cout << "Usando header tipo 1\n";
+        std::cout << "tipo 1;";
     } else
-        std::cout << "Usando header tipo 2\n";
+        std::cout << "tipo 2;";
 
     save_header(fout, canonical_codes, length_frequency_map, ordered_symbols,
                 message_len);
@@ -178,7 +179,7 @@ void save_header(std::ofstream& fout,
                  std::vector<unsigned char>& ordered_symbols,
                  size_t message_len) {
 
-    std::cout << "### Guardando header ###\n";
+    //std::cout << "### Guardando header ###\n";
     /*
      * Guardaremos el mensaje en un formato Huffman Compacto, de esta manera
      * no hay necesidad de guardar el arbol de Huffman entero en el archivo.
@@ -198,7 +199,7 @@ void save_header(std::ofstream& fout,
      */
 
     /* Longitud del mensaje */
-    std::cout << "Message len: " << message_len << '\n';
+    //std::cout << "Message len: " << message_len << '\n';
     fout.write(reinterpret_cast<char*>(&message_len), 4);
 
     /* Longitudes de códigos de cada símbolo */
@@ -224,7 +225,7 @@ void save_code(std::ofstream& fout, std::ifstream& fin,
                std::vector<unsigned char>& ordered_symbols,
                size_t message_len) {
 
-    std::cout << "### Guardando código ###\n";
+    //std::cout << "### Guardando código ###\n";
 
     std::bitset<MAX_CODE_SIZE> ulong_bitset = 0xFFFFFFFFFFFFFFFF;
     unsigned char buffer = 0;
