@@ -4,5 +4,5 @@ echo Archivo;Tamaño_original;Header;Tamaño_comprimido;Tiempo_de_compresion > r
 
 REM Repetiremos los experimentos 20 veces
 for /l %%c in (1,1,20) do (  
-    ejecutable.exe >> resultados.csv
+    ejecutable.exe sources >> resultados.csv
 )
