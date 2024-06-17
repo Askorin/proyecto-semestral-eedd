@@ -35,6 +35,10 @@ void truncate(std::string& filename, std::string& truncatedFilename, std::stream
 }
 
 int main() {
+    /*
+     * Nombre del archivo de texto seleccionado para al experimentación, en este caso, 'sources'
+     * el cual fue extraido del archivo comprimido sources.100MB.gz, pero pordria ser cualquier otro texto de Pizza&Chili.
+     */
     std::string filename = "../data/sources";
     std::vector<int> sizes = {
         1024, // 1kB
