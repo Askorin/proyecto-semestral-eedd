@@ -10,7 +10,7 @@ int main() {
     //string encode_file_name_output = "../data/sample_compressed";
     //string decode_file_name_output = "../data/sample_decompressed.txt";
 
-    string encode_file_name_input = "../data/english.txt";
+    string encode_file_name_input = "../data/sample.txt";
     string encode_file_name_output = "../data/compressed";
     string decode_file_name_output = "../data/decompressed.txt";
 
