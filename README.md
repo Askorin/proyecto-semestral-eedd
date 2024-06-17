@@ -6,7 +6,7 @@ Para correr los tests de este proyecto, tener las siguientes consideraciones:
 
 El testeo se basa en textos de [Pizza&Chili](https://pizzachili.dcc.uchile.cl/texts.html), por lo que cualquier archivo de texto con un peso minimo de 100MB en este sitio deberia funcionar correctamente para realizar el testeo.
 
-Por motivos de espacio, en el repositorio solo hay un archivo .gz que contiene un texto llamado 'sources', por loq ue sera importante descompirmirlo antes que nada.
+Por motivos de espacio, en el repositorio solo hay un archivo .gz que contiene un texto llamado 'sources', asi que será importante descompirmirlo antes que nada.
 
 Para crear archivos de distintos tamaños, usamos `truncate.cpp`, por ejemplo para un archivo `sources` que se encuentra en la carpeta `data`:
 ```
