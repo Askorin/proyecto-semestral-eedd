@@ -96,7 +96,7 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
         get_canonical_codes(code_length_map, ordered_symbols);
 
     /* Codificamos */
-    std::ifstream fin(file_name_input, std::fstream::in  | std::fstream::binary);
+    std::ifstream fin(file_name_input, std::fstream::in | std::fstream::binary);
 
     std::ofstream fout(file_name_output, std::ofstream::out |
                                              std::ofstream::trunc |
@@ -232,8 +232,7 @@ void save_code(std::ofstream& fout, std::ifstream& fin,
     unsigned char buffer_size = 0;
     unsigned char c;
 
-    while (!fin.eof()) {
-        fin.read(reinterpret_cast<char*>(&c), sizeof(c));
+    while (fin.read(reinterpret_cast<char*>(&c), sizeof(c))) {
         auto code = canonical_codes[c].code;
         auto bits = canonical_codes[c].length;
 
@@ -312,7 +311,6 @@ void decode_file(std::string& file_name_encoded,
         buffer >>= 1;
         --buffer_size;
 
-        // TODO: Manejar caso root es hoja
         if (bit)
             current = current->right;
         else
@@ -408,14 +406,12 @@ calculate_frequencies_from_file(std::string& file_name, size_t& message_len) {
     std::unordered_map<unsigned char, size_t> frequencies;
     std::fstream fin(file_name, std::fstream::in | std::fstream::binary);
     unsigned char c;
-    while (!fin.eof()) {
-        fin.read(reinterpret_cast<char*>(&c), sizeof(c));
+    while (fin.read(reinterpret_cast<char*>(&c), sizeof(c))) {
         frequencies[c]++;
         ++message_len;
     }
     return frequencies;
 }
-
 
 /* TODO: Manejar edge case de un carácter */
 Node* generate_huffman_tree(
@@ -447,7 +443,12 @@ Node* generate_huffman_tree(
         prio_queue.push(node_combined);
     }
 
-    Node* root = prio_queue.top();
+    Node* root;
+    if (prio_queue.size()) {
+        root = prio_queue.top();
+    } else {
+        root = nullptr;
+    }
     return root;
 }
 
