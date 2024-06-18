@@ -7,7 +7,6 @@
 #include <ios>
 #include <iostream>
 
-// Máximo probado que no se crashea: 1000000 de caracteres con window size de 5000
 void comprimir(std::string string, int window_size, std::string filename) {
     const bool VERBOSE = false;
     const bool TREE_VERBOSE = false;
@@ -87,4 +86,26 @@ std::string descomprimir(std::string filename) {
         compressed_file.getline(buffer, 100);
     }
     return string;
+}
+
+int main() {
+    const int CHAR_COUNT = 1000000;
+
+    std::ifstream input;
+    input.open("data/english100MB.txt");
+    
+    std::string text;
+
+    char buffer[1000];
+
+    input.get(buffer, 1000, char(200));
+
+    while (input.good()) {
+        text.append(buffer);
+        input.get(buffer, 1000, char(200));
+    }
+
+    text = text.substr(0, CHAR_COUNT);
+
+    comprimir(text, 100000, "compresion.txt");
 }
