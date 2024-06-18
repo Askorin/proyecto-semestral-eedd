@@ -1,11 +1,11 @@
 #include "../inc/huffman.h"
+#include <array>
 #include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <ostream>
 #include <queue>
 #include <stack>
-#include <array>
 
 bool CompareHuffmanNodes::operator()(Node* node_l, Node* node_r) {
     return node_l->freq > node_r->freq;
@@ -58,11 +58,11 @@ Code Code::get_reversed() {
 }
 
 void encode_file(std::string& file_name_input, std::string& file_name_output) {
-    //std::cout << "### Comenzando Codificación ###\n";
+    // std::cout << "### Comenzando Codificación ###\n";
     size_t message_len = 0;
     auto frequencies =
         calculate_frequencies_from_file(file_name_input, message_len);
-    //std::cout << "Message length: " << message_len << '\n';
+    // std::cout << "Message length: " << message_len << '\n';
     std::cout << message_len << ";";
     Node* root = generate_huffman_tree(frequencies);
 
@@ -156,6 +156,26 @@ get_canonical_codes(std::array<unsigned char, CHAR_NUM>& code_length_map,
      * únicamente por ceros.
      */
 
+    /* La razón por la que damos vuelta el código es que los número se
+     * escriben desde bit más significativo a menos significativo, pero un
+     * prefijo se chequea desde más significativo a menos significativo. A
+     * lo que quiero llegar es que si ingresaramos los códigos en el estado
+     * en que los conseguimos, a la hora de decodificar, los recorreríamos
+     * de bit MENOS SIGNIFICATIVO A MÁS SIGNIFICATIVO ¿Qué significa esto?
+     * Que no puedo saber si algo es prefijo de algo con esa información
+     * (aunque se podría sufijo) A modo de ejemplo, ver los códigos:
+     *
+     * 00, 01, 100
+     *
+     * Definitivamente son prefix-free, pero a la hora de escribirlos por el
+     * bitstream, quedaría algo: 00 01 10
+     *
+     * Ok, ahora para leerlo en caso de decodificación, vamos de bit menos
+     * significativo (derecha) a más significativo (izquierda)
+     * Chequeamos 0, Chequeamos 0, Calza con 00!
+     * Esto está mal, porque en efecto, 00 no es prefijo de 100, pero sí es
+     * sufijo. Perdón si es un comentario muy largo pero esta es mi pesadilla
+     */
     while (!prio_queue.empty()) {
         auto current_symbol = prio_queue.top();
         ordered_symbols.push_back(current_symbol.first);
@@ -179,7 +199,7 @@ void save_header(std::ofstream& fout,
                  std::vector<unsigned char>& ordered_symbols,
                  size_t message_len) {
 
-    //std::cout << "### Guardando header ###\n";
+    // std::cout << "### Guardando header ###\n";
     /*
      * Guardaremos el mensaje en un formato Huffman Compacto, de esta manera
      * no hay necesidad de guardar el arbol de Huffman entero en el archivo.
@@ -199,7 +219,7 @@ void save_header(std::ofstream& fout,
      */
 
     /* Longitud del mensaje */
-    //std::cout << "Message len: " << message_len << '\n';
+    // std::cout << "Message len: " << message_len << '\n';
     fout.write(reinterpret_cast<char*>(&message_len), 4);
 
     /* Longitudes de códigos de cada símbolo */
@@ -225,7 +245,7 @@ void save_code(std::ofstream& fout, std::ifstream& fin,
                std::vector<unsigned char>& ordered_symbols,
                size_t message_len) {
 
-    //std::cout << "### Guardando código ###\n";
+    // std::cout << "### Guardando código ###\n";
 
     std::bitset<MAX_CODE_SIZE> ulong_bitset = 0xFFFFFFFFFFFFFFFF;
     unsigned char buffer = 0;
