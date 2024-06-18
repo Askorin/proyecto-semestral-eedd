@@ -58,12 +58,11 @@ Code Code::get_reversed() {
 }
 
 void encode_file(std::string& file_name_input, std::string& file_name_output) {
-    // std::cout << "### Comenzando Codificación ###\n";
     size_t message_len = 0;
     auto frequencies =
         calculate_frequencies_from_file(file_name_input, message_len);
     // std::cout << "Message length: " << message_len << '\n';
-    std::cout << message_len << ";";
+    // std::cout << message_len << ";";
     Node* root = generate_huffman_tree(frequencies);
 
     /* Mapa que guardará las longitudes de los códigos de cada símbolo, esto es
@@ -119,9 +118,10 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
     size_t tamaño_header_tipo_2 = max_length + ordered_symbols.size() + 1;
 
     if (tamaño_header_tipo_1 <= tamaño_header_tipo_2) {
-        std::cout << "tipo 1;";
-    } else
-        std::cout << "tipo 2;";
+        // std::cout << "tipo 1;";
+    } else {
+        // std::cout << "tipo 2;";
+    }
 
     save_header(fout, canonical_codes, length_frequency_map, ordered_symbols,
                 message_len);
@@ -156,7 +156,8 @@ get_canonical_codes(std::array<unsigned char, CHAR_NUM>& code_length_map,
      * únicamente por ceros.
      */
 
-    /* La razón por la que damos vuelta el código es que los número se
+    /*
+     * La razón por la que damos vuelta el código es que los número se
      * escriben desde bit más significativo a menos significativo, pero un
      * prefijo se chequea desde más significativo a menos significativo. A
      * lo que quiero llegar es que si ingresaramos los códigos en el estado
@@ -168,7 +169,7 @@ get_canonical_codes(std::array<unsigned char, CHAR_NUM>& code_length_map,
      * 00, 01, 100
      *
      * Definitivamente son prefix-free, pero a la hora de escribirlos por el
-     * bitstream, quedaría algo: 00 01 10
+     * bitstream, quedaría algo: 00 01 100
      *
      * Ok, ahora para leerlo en caso de decodificación, vamos de bit menos
      * significativo (derecha) a más significativo (izquierda)
@@ -283,13 +284,13 @@ void decode_file(std::string& file_name_encoded,
     std::ifstream fin(file_name_encoded,
                       std::ifstream::in | std::ifstream::binary);
 
-    std::cout << "### Empezando a decodificar ###\n";
+    // std::cout << "### Empezando a decodificar ###\n";
     /* Primero extraemos la longitud del mensaje, esta se encuentra en los
      * primeros 4 bytes. */
     /* Igualar a cero es importane. */
     size_t message_len = 0;
     fin.read(reinterpret_cast<char*>(&message_len), 4);
-    std::cout << "### Longitud del mensaje: " << message_len << "###\n";
+    // std::cout << "### Longitud del mensaje: " << message_len << "###\n";
 
     /* Ahora reconstruiremos el mapa de longitudes de código para cada
      * carácter
@@ -301,18 +302,18 @@ void decode_file(std::string& file_name_encoded,
         code_lengths[(unsigned char)c] = bit_length;
     }
 
-    std::cout << "### Generando códigos canónicos para decodificación ###\n";
+    // std::cout << "### Generando códigos canónicos para decodificación ###\n";
 
     /* Ahora tenemos que reconstruir los códigos canónicos. */
     std::vector<unsigned char> ordered_symbols;
     std::array<Code, CHAR_NUM> code_map =
         get_canonical_codes(code_lengths, ordered_symbols);
 
-    std::cout << "### Recuperando arbol de Huffman ###\n";
+    // std::cout << "### Recuperando arbol de Huffman ###\n";
     /* Regeneramos al arbol */
     Node* root = generate_huffman_tree(code_map);
 
-    std::cout << "### Decodificando y guardando resultados ###\n";
+    // std::cout << "### Decodificando y guardando resultados ###\n";
     std::ofstream fout(file_name_output,
                        std::ofstream::out | std::ofstream::trunc);
 
@@ -344,7 +345,7 @@ void decode_file(std::string& file_name_encoded,
             ++decoded_symbols;
             fout << current->symbol;
             current = root;
-            std::cout << current->symbol;
+            // std::cout << current->symbol;
         }
     }
 
