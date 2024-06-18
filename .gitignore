@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# Ignorar todo lo de data excepto sources.gz
+data/*
+!data/sources.gz
