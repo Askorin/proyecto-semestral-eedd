@@ -86,21 +86,6 @@ void suffixTree::insert(std::string text, bool verbose = 0) {
     this->length_text += text.length();
 }
 
-void suffixTree::print_node_recursive(childNode* node, std::string prev) {
-    std::string new_str = std::string(prev).append(node->string);
-    std::cout << "Nodo: " << node->string << ", Sufijo: " << new_str << ", pos: " << node->pos << "\n";
-    if (node->child != NULL) {
-        print_node_recursive(node->child, new_str);
-    }
-    if (node->next_sibling != NULL) {
-        print_node_recursive(node->next_sibling, prev);
-    }
-}
-
-void suffixTree::print_stored_substrings() {
-    print_node_recursive(this->first_child, std::string());
-}
-
 std::pair<int, int> suffixTree::search_substring(std::string string_to_find) {
     childNode* actual_node = this->first_child;
     std::string substring;
@@ -130,8 +115,20 @@ std::pair<int, int> suffixTree::search_substring(std::string string_to_find) {
     return std::make_pair(0, 0);
 }
 
+void suffixTree::delete_node_recursive(childNode* node) {
+    if (node->child != NULL) delete_node_recursive(node->child);
+    if (node->next_sibling != NULL) delete_node_recursive(node->next_sibling);
+    delete node;
+}
+
 suffixTree::suffixTree(std::string text, bool verbose = 0) {
     this->length_text = 0;
     this->first_child = NULL;
     this->insert(text, verbose);
+}
+
+suffixTree::~suffixTree() {
+    if (this->first_child != NULL) {
+        this->delete_node_recursive(this->first_child);
+    } 
 }

@@ -18,11 +18,11 @@ private:
     childNode* first_child;
     int length_text;
 public:
+    void delete_node_recursive(childNode*);
     void insert(std::string, bool);
     std::pair<int, int> search_substring(std::string);
-    void print_node_recursive(childNode*, std::string);
-    void print_stored_substrings();
     suffixTree(std::string, bool);
+    ~suffixTree();
 };
 
 #endif
