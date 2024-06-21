@@ -65,13 +65,10 @@ class CompareCodes {
 void encode_file(std::string&, std::string&);
 
 void save_header(std::ofstream&, std::array<Code, CHAR_NUM>&,
-                 std::array<size_t, CHAR_NUM>&, std::vector<unsigned char>&,
-                 size_t);
+                 std::array<unsigned char, CHAR_NUM>&,
+                 std::vector<unsigned char>&, size_t, int);
 
-void save_code(std::ofstream&, std::ifstream& fin,
-               std::array<Code, CHAR_NUM>&,
-               std::array<size_t, CHAR_NUM>&, std::vector<unsigned char>&,
-               size_t);
+void save_code(std::ofstream&, std::ifstream& fin, std::array<Code, CHAR_NUM>&);
 
 std::array<Code, CHAR_NUM>
 get_canonical_codes(std::array<unsigned char, CHAR_NUM>&,
@@ -83,15 +80,15 @@ void decode_file(std::string&, std::string&);
 
 std::unordered_map<unsigned char, size_t> calculate_frequencies(std::string&);
 
-std::unordered_map<unsigned char, size_t> calculate_frequencies_from_file(std::string&,
-                                                                 size_t&);
+std::unordered_map<unsigned char, size_t>
+calculate_frequencies_from_file(std::string&, size_t&);
 
 Node* generate_huffman_tree(std::unordered_map<unsigned char, size_t>&);
 
 Node* generate_huffman_tree(std::array<Code, CHAR_NUM>&);
 
 void traverse_huffman_tree(Node*, std::array<unsigned char, CHAR_NUM>&, size_t&,
-                           std::array<size_t, CHAR_NUM>&, size_t&);
+                           std::array<unsigned char, CHAR_NUM>&);
 
 void _generate_huffman_tree(unsigned char, Code&, Node*, size_t, size_t&);
 
