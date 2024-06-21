@@ -97,8 +97,8 @@ int main(int argc, char* argv[]) {
     size_t count = 0;
     for (auto& name : filenames) {
         if (count == 5) break;
-        string file = name + ".txt";
         string encode_output_file = name + "_compressed";
+        string file = name + ".txt";
         string decode_output_file = name + "_decompressed.txt";
         bool test_results = hufmann_functional_test(file, encode_output_file, decode_output_file);
         ++count;
@@ -109,8 +109,8 @@ int main(int argc, char* argv[]) {
     else std::cout << "\n### [ X ] Error! Tests Funcionales de Huffman REPROBADOS ###\n";
 
     for (auto& name : filenames) {
+        string encode_output_file = name + "_compressed";
         string file = name + ".txt";
-        string encode_output_file = name + "_compressed.txt";
 
         encode_test(file, encode_output_file);
     }
