@@ -61,7 +61,7 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
     size_t message_len = 0;
     auto frequencies =
         calculate_frequencies_from_file(file_name_input, message_len);
-    // std::cout << "Message length: " << message_len << '\n';
+    //std::cout << "Message length: " << message_len << '\n';
     // std::cout << message_len << ";";
     Node* root = generate_huffman_tree(frequencies);
 
@@ -75,14 +75,13 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
      * Mapa que guardará la frecuencia de una longitud de código dada, utilizado
      * para Huffman canónico
      */
-    std::array<size_t, CHAR_NUM> length_frequency_map{0};
+    std::array<unsigned char, CHAR_NUM> length_frequency_map{0};
 
     /* Longitud total del mensaje codificado */
     size_t total_len = 0;
     /* Máxima longitud de los códigos */
-    size_t max_length = 0;
     traverse_huffman_tree(root, code_length_map, total_len,
-                          length_frequency_map, max_length);
+                          length_frequency_map);
 
     /* Este vector servirá para guardar los símbolos en orden el de las
      * longitudes de sus códigos */
@@ -94,6 +93,7 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
     std::array<Code, CHAR_NUM> canonical_codes =
         get_canonical_codes(code_length_map, ordered_symbols);
 
+    size_t max_code_length = canonical_codes[ordered_symbols.back()].length;
     /* Codificamos */
     std::ifstream fin(file_name_input, std::fstream::in | std::fstream::binary);
 
@@ -101,11 +101,12 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
                                              std::ofstream::trunc |
                                              std::ofstream::binary);
 
+    // std::cout << "Unique symbols: " << ordered_symbols.size() << '\n';
     /*
      * Para el primer tipo de header se guardan las longitudes de los códigos
      * para TODOS los símbolos del alfabeto.
      * */
-    size_t tamaño_header_tipo_1 = CHAR_NUM;
+    size_t header_type_1_size = CHAR_NUM;
     /*
      * Para el segundo tipo se guardan las frecuencias de cada longitud de
      * código y luego los símbolos ordenados con respecto a longitud de código.
@@ -115,18 +116,15 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
      * de ellos en bytes. Además se incluye un separador de un byte entre las
      * dos.
      */
-    size_t tamaño_header_tipo_2 = max_length + ordered_symbols.size() + 1;
+    size_t header_type_2_size = max_code_length + ordered_symbols.size() + 1;
 
-    if (tamaño_header_tipo_1 <= tamaño_header_tipo_2) {
-        // std::cout << "tipo 1;";
-    } else {
-        // std::cout << "tipo 2;";
-    }
+    int header_type = (header_type_1_size <= header_type_2_size) ? 1 : 2;
+
+    std::cout << "tipo" << header_type << '\n';
 
     save_header(fout, canonical_codes, length_frequency_map, ordered_symbols,
-                message_len);
-    save_code(fout, fin, canonical_codes, length_frequency_map, ordered_symbols,
-              message_len);
+                message_len, header_type);
+    save_code(fout, fin, canonical_codes);
 
     fin.close();
     fout.close();
@@ -196,11 +194,18 @@ get_canonical_codes(std::array<unsigned char, CHAR_NUM>& code_length_map,
 
 void save_header(std::ofstream& fout,
                  std::array<Code, CHAR_NUM>& canonical_codes,
-                 std::array<size_t, CHAR_NUM>& length_map,
+                 std::array<unsigned char, CHAR_NUM>& length_frequency_map,
                  std::vector<unsigned char>& ordered_symbols,
-                 size_t message_len) {
+                 size_t message_len, int header_type) {
 
     // std::cout << "### Guardando header ###\n";
+    // std::cout << "Message len: " << message_len << '\n';
+    //
+    /* Indicador del tpo de header utilizado. */
+    fout.write(reinterpret_cast<char*>(&header_type), 1);
+    /* Siempre escribimos la longitud del mensaje en el header. */
+    fout.write(reinterpret_cast<char*>(&message_len), 4);
+
     /*
      * Guardaremos el mensaje en un formato Huffman Compacto, de esta manera
      * no hay necesidad de guardar el arbol de Huffman entero en el archivo.
@@ -219,32 +224,72 @@ void save_header(std::ofstream& fout,
      * del alfabeto.
      */
 
-    /* Longitud del mensaje */
-    // std::cout << "Message len: " << message_len << '\n';
-    fout.write(reinterpret_cast<char*>(&message_len), 4);
+    if (header_type == 1) {
+        /* Longitudes de códigos de cada símbolo */
+        for (size_t c = 0; c < CHAR_NUM; ++c) {
+            unsigned char bit_length = 0;
+            /* Si el carácter tiene un código de longitud no zero */
+            if (canonical_codes[(unsigned char)c].length) {
+                bit_length = canonical_codes[(unsigned char)c].length;
+            }
 
-    /* Longitudes de códigos de cada símbolo */
-    for (size_t c = 0; c < CHAR_NUM; ++c) {
-        unsigned char bit_length = 0;
-        /* Si el carácter tiene un código de longitud no zero */
-        if (canonical_codes[(unsigned char)c].length) {
-            bit_length = canonical_codes[(unsigned char)c].length;
+            fout.write(reinterpret_cast<char*>(&bit_length),
+                       sizeof(bit_length));
         }
-
-        fout.write(reinterpret_cast<char*>(&bit_length), sizeof(bit_length));
     }
 
     /*
      * Método 2, útil cuando no se está utilizando todo el alfabeto. Se
-     * guarda primero la cantidad de longitudes
+     * guarda primero la frecuencias de longitudes de códigos, hasta la más
+     * alta. Por ejemplo, de tener los códigos 110, 1110, 1110 se guarda
+     *
+     * (0, 0, 1, 2)
+     *
+     * Adicionalmente, se guardan los carácteres en orden de sus longitudes de
+     * código, y en segunda preferencia, orden lexicográfico. (como estamos
+     * trabajando con binario, simplemente chequeamos valor). Por ejemplo, si
+     * los códigos anteriores les correspondían a (D, B, A), respectivamente, se
+     * guarda: (D, A, B).
+     * De esta manera, el header final quedaría (0, 0, 1, 2) SEP (D, A, B).
+     * Se puede reconstruir con facilidad un mapa de símbolo->longitud de
+     * código.
      */
+
+    if (header_type == 2) {
+        /*
+         * La longitud de código máxima claramente le corresponde al último
+         * elemento de ordered_symbols
+         */
+        unsigned char max_code_length =
+            canonical_codes[ordered_symbols.back()].length;
+        /* Longitudes de códigos de cada símbolo */
+
+        for (size_t c = 1; c <= max_code_length; ++c) {
+            unsigned char length_frequency = length_frequency_map[c];
+            fout.write(reinterpret_cast<char*>(&length_frequency),
+                       sizeof(length_frequency));
+        }
+
+        /*
+         * Te podrías preguntar, ¿Puede que exista una longitud de código con
+         * frecuencia 255? La respuesta es que para que eso ocurriera, todos
+         * los símbolos del alfabeto deberían tener la misma frecuencia, de ser
+         * el caso, este método no estaría siendo utilizado, ya que valdría
+         * menos espacio guardar la longitud de cada código como en el método 1.
+         * En el primer caso. Por esto es que es seguro utilizar un separador
+         * 0xFF = 255.
+         */
+        unsigned char sep = 0xFF;
+        fout.write(reinterpret_cast<char*>(&sep), sizeof(sep));
+
+        for (unsigned char c : ordered_symbols) {
+            fout.write(reinterpret_cast<char*>(&c), sizeof(c));
+        }
+    }
 }
 
 void save_code(std::ofstream& fout, std::ifstream& fin,
-               std::array<Code, CHAR_NUM>& canonical_codes,
-               std::array<size_t, CHAR_NUM>& length_map,
-               std::vector<unsigned char>& ordered_symbols,
-               size_t message_len) {
+               std::array<Code, CHAR_NUM>& canonical_codes) {
 
     // std::cout << "### Guardando código ###\n";
 
@@ -285,10 +330,16 @@ void decode_file(std::string& file_name_encoded,
                       std::ifstream::in | std::ifstream::binary);
 
     // std::cout << "### Empezando a decodificar ###\n";
-    /* Primero extraemos la longitud del mensaje, esta se encuentra en los
-     * primeros 4 bytes. */
-    /* Igualar a cero es importane. */
+
+    /*
+     * Primero se debe extraer el tipo de haader, y luego la longitud del
+     * mensaje.
+     */
+
+    /* Igualar a cero es importante. */
+    int header_type = 0;
     size_t message_len = 0;
+    fin.read(reinterpret_cast<char*>(&header_type), 1);
     fin.read(reinterpret_cast<char*>(&message_len), 4);
     // std::cout << "### Longitud del mensaje: " << message_len << "###\n";
 
@@ -296,15 +347,52 @@ void decode_file(std::string& file_name_encoded,
      * carácter
      */
     std::array<unsigned char, CHAR_NUM> code_lengths{0};
-    for (size_t c = 0; c < CHAR_NUM; ++c) {
-        unsigned char bit_length = 0;
-        fin.read(reinterpret_cast<char*>(&bit_length), 1);
-        code_lengths[(unsigned char)c] = bit_length;
+
+    if (header_type == 1) {
+        for (size_t c = 0; c < CHAR_NUM; ++c) {
+            unsigned char bit_length = 0;
+            fin.read(reinterpret_cast<char*>(&bit_length), 1);
+            code_lengths[(unsigned char)c] = bit_length;
+        }
     }
+    if (header_type == 2) {
+        std::vector<std::pair<unsigned char, unsigned char>> length_frequencies;
+        unsigned char read_length_frequency = 0;
+        unsigned char length = 1;
+        fin.read(reinterpret_cast<char*>(&read_length_frequency), 1);
+        while (read_length_frequency != 0xFF) {
+            /* Guardamos la frecuencia asociada a la longitud de código leida */
+            length_frequencies.push_back(
+                std::pair<unsigned char, unsigned char>(length++,
+                                                        read_length_frequency));
+            fin.read(reinterpret_cast<char*>(&read_length_frequency), 1);
+        }
+
+        for (auto length_frequency : length_frequencies) {
+            for (size_t i = 0; i < length_frequency.second; ++i) {
+                unsigned char symbol = 0;
+                fin.read(reinterpret_cast<char*>(&symbol), 1);
+                code_lengths[symbol] = length_frequency.first;
+            }
+        }
+    }
+
+    /* sanity check */
+    // for (size_t c = 0; c < CHAR_NUM; ++c) {
+    //     if (code_lengths[c]) {
+    //         std::cout << (unsigned char)c << ": " << int(code_lengths[c])
+    //                   << '\n';
+    //     }
+    // }
 
     // std::cout << "### Generando códigos canónicos para decodificación ###\n";
 
     /* Ahora tenemos que reconstruir los códigos canónicos. */
+
+    /*
+     * Un vector que guarda los símbolos ordenados en base a sus longitudes de
+     * código y luego por su orden lexicográfico
+     */
     std::vector<unsigned char> ordered_symbols;
     std::array<Code, CHAR_NUM> code_map =
         get_canonical_codes(code_lengths, ordered_symbols);
@@ -352,11 +440,10 @@ void decode_file(std::string& file_name_encoded,
     fout.close();
 }
 
-void traverse_huffman_tree(Node* root,
-                           std::array<unsigned char, CHAR_NUM>& code_length_map,
-                           size_t& total_bits,
-                           std::array<size_t, CHAR_NUM>& length_frequency_map,
-                           size_t& max_length) {
+void traverse_huffman_tree(
+    Node* root, std::array<unsigned char, CHAR_NUM>& code_length_map,
+    size_t& total_bits,
+    std::array<unsigned char, CHAR_NUM>& length_frequency_map) {
 
     if (!root)
         return;
@@ -376,9 +463,6 @@ void traverse_huffman_tree(Node* root,
             total_bits += node->freq * bit;
             code_length_map[node->symbol] = bit;
             ++length_frequency_map[bit];
-            max_length = length_frequency_map[bit] > max_length
-                             ? length_frequency_map[bit]
-                             : max_length;
         }
         if (node->right) {
             stack->push(std::pair(node->right, bit + 1));
@@ -431,6 +515,12 @@ calculate_frequencies_from_file(std::string& file_name, size_t& message_len) {
         frequencies[c]++;
         ++message_len;
     }
+    // size_t i = 0;
+    // for (auto entry : frequencies) {
+    //     std::cout << int(i++) << "- " << int(entry.first)
+    //               << ", freq: " << int(entry.second) << '\n';
+    //     ;
+    // }
     return frequencies;
 }
 
