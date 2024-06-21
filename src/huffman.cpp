@@ -403,7 +403,7 @@ void decode_file(std::string& file_name_encoded,
 
     // std::cout << "### Decodificando y guardando resultados ###\n";
     std::ofstream fout(file_name_output,
-                       std::ofstream::out | std::ofstream::trunc);
+                       std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
 
     size_t decoded_symbols = 0;
 

@@ -24,16 +24,18 @@ bool hufmann_functional_test(string& input_file, string& encode_output_file,
     while (fin.read(reinterpret_cast<char*>(&c_in), sizeof(c_in))) {
 
         ++byte_count_in;
-        if (decoded_fin.read(reinterpret_cast<char*>(&c_in_decoded), sizeof(c_in_decoded))) {
+        if (decoded_fin.read(reinterpret_cast<char*>(&c_in_decoded),
+                             sizeof(c_in_decoded))) {
             ++byte_count_decoded;
         }
 
         if (c_in != c_in_decoded) {
-            std::cout << "Byte número " << byte_count_in << " del input difiere\n";
+            std::cout << "Byte número " << byte_count_in
+                      << " del input difiere\n";
             return false;
         }
     }
-    
+
     if (byte_count_in != byte_count_decoded) {
         std::cout << "Tamaño de los archivos difiere\n";
         return false;
@@ -96,17 +98,25 @@ int main(int argc, char* argv[]) {
     /* Hasta 1MB porque da lata esperar */
     size_t count = 0;
     for (auto& name : filenames) {
-        if (count == 5) break;
+        if (count == 5)
+            break;
         string encode_output_file = name + "_compressed";
         string file = name + ".txt";
         string decode_output_file = name + "_decompressed.txt";
-        bool test_results = hufmann_functional_test(file, encode_output_file, decode_output_file);
+        bool test_results = hufmann_functional_test(file, encode_output_file,
+                                                    decode_output_file);
         ++count;
-        if (!test_results) huffman_works = test_results;
+        if (!test_results)
+            huffman_works = test_results;
     }
 
-    if (huffman_works) std::cout << "\n### [ O ] Tests Funcionales de Huffman Aprobados ###\n";
-    else std::cout << "\n### [ X ] Error! Tests Funcionales de Huffman REPROBADOS ###\n";
+    if (huffman_works)
+        std::cout << "\n### [ O ] Tests Funcionales de Huffman Aprobados ###\n";
+    else {
+        std::cout << "\n### [ X ] Error! Tests Funcionales de Huffman "
+                     "REPROBADOS ###\n";
+        return 1;
+    }
 
     for (auto& name : filenames) {
         string encode_output_file = name + "_compressed";
