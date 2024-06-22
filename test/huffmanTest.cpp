@@ -95,6 +95,19 @@ int main(int argc, char* argv[]) {
 
     std::cout << "### Testeo Funcional de Huffman ###\n";
     bool huffman_works = true;
+
+    /* Probamos casos borde para huffman */
+    vector<string> edge_cases = {"../data/one_byte", "../data/zero_byte"};
+    for (auto& name : edge_cases) {
+        string encode_output_file = name + "_compressed";
+        string decode_output_file = name + "_decompressed";
+        bool test_results = hufmann_functional_test(name, encode_output_file,
+                                                    decode_output_file);
+
+        if (!test_results)
+            huffman_works = test_results;
+    }
+
     /* Hasta 1MB porque da lata esperar */
     size_t count = 0;
     for (auto& name : filenames) {
