@@ -66,7 +66,7 @@ void encode_file(std::string&, std::string&);
 
 void save_header(std::ofstream&, std::array<Code, CHAR_NUM>&,
                  std::array<unsigned char, CHAR_NUM>&,
-                 std::vector<unsigned char>&, size_t, int);
+                 std::vector<unsigned char>&, size_t, int, size_t);
 
 void save_code(std::ofstream&, std::ifstream& fin, std::array<Code, CHAR_NUM>&);
 

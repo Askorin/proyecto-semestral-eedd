@@ -61,8 +61,8 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
     size_t message_len = 0;
     auto frequencies =
         calculate_frequencies_from_file(file_name_input, message_len);
-    //std::cout << "Message length: " << message_len << '\n';
-    // std::cout << message_len << ";";
+    // std::cout << "Message length: " << message_len << '\n';
+    //  std::cout << message_len << ";";
     Node* root = generate_huffman_tree(frequencies);
 
     /* Mapa que guardará las longitudes de los códigos de cada símbolo, esto es
@@ -93,7 +93,14 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
     std::array<Code, CHAR_NUM> canonical_codes =
         get_canonical_codes(code_length_map, ordered_symbols);
 
-    size_t max_code_length = canonical_codes[ordered_symbols.back()].length;
+    /*
+     * La longitud de código máxima claramente le corresponde al último
+     * elemento de ordered_symbols
+     */
+    size_t max_code_length = 0;
+    if (!ordered_symbols.empty())
+        max_code_length = canonical_codes[ordered_symbols.back()].length;
+
     /* Codificamos */
     std::ifstream fin(file_name_input, std::fstream::in | std::fstream::binary);
 
@@ -123,7 +130,7 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
     std::cout << "tipo" << header_type << '\n';
 
     save_header(fout, canonical_codes, length_frequency_map, ordered_symbols,
-                message_len, header_type);
+                message_len, header_type, max_code_length);
     save_code(fout, fin, canonical_codes);
 
     fin.close();
@@ -196,7 +203,7 @@ void save_header(std::ofstream& fout,
                  std::array<Code, CHAR_NUM>& canonical_codes,
                  std::array<unsigned char, CHAR_NUM>& length_frequency_map,
                  std::vector<unsigned char>& ordered_symbols,
-                 size_t message_len, int header_type) {
+                 size_t message_len, int header_type, size_t max_code_length) {
 
     // std::cout << "### Guardando header ###\n";
     // std::cout << "Message len: " << message_len << '\n';
@@ -256,12 +263,7 @@ void save_header(std::ofstream& fout,
      */
 
     if (header_type == 2) {
-        /*
-         * La longitud de código máxima claramente le corresponde al último
-         * elemento de ordered_symbols
-         */
-        unsigned char max_code_length =
-            canonical_codes[ordered_symbols.back()].length;
+
         /* Longitudes de códigos de cada símbolo */
 
         for (size_t c = 1; c <= max_code_length; ++c) {
@@ -402,8 +404,9 @@ void decode_file(std::string& file_name_encoded,
     Node* root = generate_huffman_tree(code_map);
 
     // std::cout << "### Decodificando y guardando resultados ###\n";
-    std::ofstream fout(file_name_output,
-                       std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+    std::ofstream fout(file_name_output, std::ofstream::out |
+                                             std::ofstream::trunc |
+                                             std::ofstream::binary);
 
     size_t decoded_symbols = 0;
 
@@ -445,8 +448,18 @@ void traverse_huffman_tree(
     size_t& total_bits,
     std::array<unsigned char, CHAR_NUM>& length_frequency_map) {
 
-    if (!root)
+    if (!root) {
         return;
+    }
+
+    /* Si solo tenemos un símbolo en nuestro corpus, le asignamos un código de
+     * longitud 1. */
+    if (root->is_leaf()) {
+        code_length_map[root->symbol] = 1;
+        ++length_frequency_map[1];
+        total_bits = 1;
+        return;
+    }
 
     std::stack<std::pair<Node*, unsigned char>>* stack =
         new std::stack<std::pair<Node*, unsigned char>>();
@@ -524,7 +537,6 @@ calculate_frequencies_from_file(std::string& file_name, size_t& message_len) {
     return frequencies;
 }
 
-/* TODO: Manejar edge case de un carácter */
 Node* generate_huffman_tree(
     std::unordered_map<unsigned char, size_t>& frequencies) {
 
