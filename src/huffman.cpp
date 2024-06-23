@@ -127,7 +127,7 @@ void encode_file(std::string& file_name_input, std::string& file_name_output) {
 
     int header_type = (header_type_1_size <= header_type_2_size) ? 1 : 2;
 
-    std::cout << "tipo" << header_type << '\n';
+    //std::cout << "tipo" << header_type << '\n';
 
     save_header(fout, canonical_codes, length_frequency_map, ordered_symbols,
                 message_len, header_type, max_code_length);

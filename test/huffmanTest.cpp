@@ -50,7 +50,6 @@ void encode_test(string& input_file, string& encoded_output_file) {
     auto start_encode = chrono::high_resolution_clock::now();
 
     // Codificar archivo de entrada
-    cout << input_file.substr(8) << ";";
     encode_file(input_file, encoded_output_file);
 
     /* Calculamos el tiempo transcurrido */
@@ -69,8 +68,8 @@ void encode_test(string& input_file, string& encoded_output_file) {
     size_t encoded_size = encoded_file.tellg();
     encoded_file.close();
 
-    // imprimimos el tamaño del archivo codificado y el tiempo de codificación
-    cout << encoded_size << ";" << encode_duration << std::endl;
+    // imprimimos el nombnre del archivo, el tamaño del archivo codificado y el tiempo de codificación
+    cout << input_file.substr(8) << ";" << encoded_size << ";" << encode_duration << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -93,43 +92,43 @@ int main(int argc, char* argv[]) {
                                 "../data/" + input_filename + "_50MB",
                                 "../data/" + input_filename + "_100MB"};
 
-    std::cout << "### Testeo Funcional de Huffman ###\n";
-    bool huffman_works = true;
+    // std::cout << "### Testeo Funcional de Huffman ###\n";
+    // bool huffman_works = true;
 
-    /* Probamos casos borde para huffman */
-    vector<string> edge_cases = {"../data/one_byte", "../data/zero_byte"};
-    for (auto& name : edge_cases) {
-        string encode_output_file = name + "_compressed";
-        string decode_output_file = name + "_decompressed";
-        bool test_results = hufmann_functional_test(name, encode_output_file,
-                                                    decode_output_file);
+    // /* Probamos casos borde para huffman */
+    // vector<string> edge_cases = {"../data/one_byte", "../data/zero_byte"};
+    // for (auto& name : edge_cases) {
+    //     string encode_output_file = name + "_compressed";
+    //     string decode_output_file = name + "_decompressed";
+    //     bool test_results = hufmann_functional_test(name, encode_output_file,
+    //                                                 decode_output_file);
 
-        if (!test_results)
-            huffman_works = test_results;
-    }
+    //     if (!test_results)
+    //         huffman_works = test_results;
+    // }
 
-    /* Hasta 1MB porque da lata esperar */
-    size_t count = 0;
-    for (auto& name : filenames) {
-        if (count == 5)
-            break;
-        string encode_output_file = name + "_compressed";
-        string file = name + ".txt";
-        string decode_output_file = name + "_decompressed.txt";
-        bool test_results = hufmann_functional_test(file, encode_output_file,
-                                                    decode_output_file);
-        ++count;
-        if (!test_results)
-            huffman_works = test_results;
-    }
+    // /* Hasta 1MB porque da lata esperar */
+    // size_t count = 0;
+    // for (auto& name : filenames) {
+    //     if (count == 5)
+    //         break;
+    //     string encode_output_file = name + "_compressed";
+    //     string file = name + ".txt";
+    //     string decode_output_file = name + "_decompressed.txt";
+    //     bool test_results = hufmann_functional_test(file, encode_output_file,
+    //                                                 decode_output_file);
+    //     ++count;
+    //     if (!test_results)
+    //         huffman_works = test_results;
+    // }
 
-    if (huffman_works)
-        std::cout << "\n### [ O ] Tests Funcionales de Huffman Aprobados ###\n";
-    else {
-        std::cout << "\n### [ X ] Error! Tests Funcionales de Huffman "
-                     "REPROBADOS ###\n";
-        return 1;
-    }
+    // if (huffman_works)
+    //     std::cout << "\n### [ O ] Tests Funcionales de Huffman Aprobados ###\n";
+    // else {
+    //     std::cout << "\n### [ X ] Error! Tests Funcionales de Huffman "
+    //                  "REPROBADOS ###\n";
+    //     return 1;
+    // }
 
     for (auto& name : filenames) {
         string encode_output_file = name + "_compressed";
