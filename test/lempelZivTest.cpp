@@ -101,15 +101,18 @@ int main(int argc, char* argv[]) {
 
     // Archivos a codificar obtenidos de truncate.cpp + windowsize de busqueda
     vector<pair<string, int>> filenames = {
-        {"data/" + input_filename + "_1kB", 512},
-        {"data/" + input_filename + "_10kB", 512},
-        {"data/" + input_filename + "_100kB", 512},
-        {"data/" + input_filename + "_500kB", 512},
-        {"data/" + input_filename + "_1MB", 32768},
-        {"data/" + input_filename + "_5MB", 32768},
-        {"data/" + input_filename + "_10MB", 32768},
-        {"data/" + input_filename + "_50MB", 32768},
-        {"data/" + input_filename + "_100MB", 32768}
+        {"data/" + input_filename + "_1kB", 32768 },
+        {"data/" + input_filename + "_10kB", 32768 },
+        {"data/" + input_filename + "_25kB", 32768 },
+        {"data/" + input_filename + "_50kB", 32768 },
+        {"data/" + input_filename + "_75kB", 32768 },
+        {"data/" + input_filename + "_100kB", 32768 },
+        {"data/" + input_filename + "_250kB", 32768 },
+        {"data/" + input_filename + "_500kB", 32768 },
+        {"data/" + input_filename + "_750kB", 32768 },
+        {"data/" + input_filename + "_1MB", 32768}
+        // {"data/" + input_filename + "_5MB", 32768},
+        // {"data/" + input_filename + "_10MB", 32768},
     };
 
     // std::cout << "###  Testeo Funcional de LempelZiv ###\n";
@@ -139,7 +142,7 @@ int main(int argc, char* argv[]) {
 
     for (auto& name : filenames) {
         string file = name.first + ".txt";
-        string compress_output_file = name.first + "_compressed";
+        string compress_output_file = name.first + "_compressed.txt";
 
         compress_test(file, name.second, compress_output_file);
     }

@@ -84,13 +84,16 @@ int main(int argc, char* argv[]) {
     // Archivos a codificar obtenidos de truncate.cpp
     vector<string> filenames = {"../data/" + input_filename + "_1kB",
                                 "../data/" + input_filename + "_10kB",
+                                "../data/" + input_filename + "_25kB",
+                                "../data/" + input_filename + "_50kB",
+                                "../data/" + input_filename + "_75kB",
                                 "../data/" + input_filename + "_100kB",
+                                "../data/" + input_filename + "_250kB",
                                 "../data/" + input_filename + "_500kB",
+                                "../data/" + input_filename + "_750kB",
                                 "../data/" + input_filename + "_1MB",
                                 "../data/" + input_filename + "_5MB",
-                                "../data/" + input_filename + "_10MB",
-                                "../data/" + input_filename + "_50MB",
-                                "../data/" + input_filename + "_100MB"};
+                                "../data/" + input_filename + "_10MB"};
 
     // std::cout << "### Testeo Funcional de Huffman ###\n";
     // bool huffman_works = true;
