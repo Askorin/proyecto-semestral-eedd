@@ -88,7 +88,7 @@ void comprimir(std::string string, int window_size, std::string filename) {
     delete tree;
 }
 
-std::string descomprimir(std::string filename) {
+void descomprimir(std::string filename, std::string output_filename) {
     std::string string;
     std::ifstream compressed_file;
     compressed_file.open(filename, std::ios_base::binary);
@@ -109,7 +109,11 @@ std::string descomprimir(std::string filename) {
         compressed_file.read((char*) &pos, sizeof(position_type));
         compressed_file.read((char*) &length, sizeof(length_type));
     }
-    return string;
+    std::ofstream fout(output_filename, std::ofstream::out |
+                                             std::ofstream::trunc |
+                                             std::ofstream::binary);
+    fout << string;
+    fout.close();
 }
 
 /*

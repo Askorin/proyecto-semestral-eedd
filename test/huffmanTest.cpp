@@ -98,8 +98,8 @@ int main(int argc, char* argv[]) {
     // /* Probamos casos borde para huffman */
     // vector<string> edge_cases = {"../data/one_byte", "../data/zero_byte"};
     // for (auto& name : edge_cases) {
-    //     string encode_output_file = name + "_compressed";
-    //     string decode_output_file = name + "_decompressed";
+    //     string encode_output_file = name + "_coded";
+    //     string decode_output_file = name + "_decoded";
     //     bool test_results = hufmann_functional_test(name, encode_output_file,
     //                                                 decode_output_file);
 
@@ -112,9 +112,9 @@ int main(int argc, char* argv[]) {
     // for (auto& name : filenames) {
     //     if (count == 5)
     //         break;
-    //     string encode_output_file = name + "_compressed";
+    //     string encode_output_file = name + "_coded";
     //     string file = name + ".txt";
-    //     string decode_output_file = name + "_decompressed.txt";
+    //     string decode_output_file = name + "_decoded.txt";
     //     bool test_results = hufmann_functional_test(file, encode_output_file,
     //                                                 decode_output_file);
     //     ++count;
@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
     // }
 
     for (auto& name : filenames) {
-        string encode_output_file = name + "_compressed";
+        string encode_output_file = name + "_coded";
         string file = name + ".txt";
 
         encode_test(file, encode_output_file);
