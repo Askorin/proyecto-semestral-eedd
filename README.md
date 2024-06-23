@@ -31,8 +31,6 @@ Para ello usaremos `huffman.bat`
 ### Obtención de resultados
 
 Si todo sale bien, al realizar multiples experimentos se debe crear un archivo `resultados.csv` el cual indique
-* Archivo
-* Tamaño original  (en bytes)
-* Header utilizado
+* Archivo (El cual señala su peso)
 * Tamaño del archivo comprimido (en bytes)
 * Tiempo de compresión (en ms)
