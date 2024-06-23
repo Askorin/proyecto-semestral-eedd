@@ -10,6 +10,6 @@ typedef short length_type;
 
 void guardar_par(position_type, length_type, std::string);
 void comprimir(std::string, int, std::string);
-std::string descomprimir(std::string);
+void descomprimir(std::string, std::string);
 
 #endif
